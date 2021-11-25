@@ -31,6 +31,12 @@ public class Leecher
 		@Override
 		public void handle(ConnectionEvent.Ended event)
 		{
+			if(server.isClosed())
+			{
+				System.out.println();
+				return;
+			}
+
 			try
 			{
 				updateContracts();
@@ -65,14 +71,14 @@ public class Leecher
 				System.out.println(expected);
 				System.out.println(received);
 
-				try
-				{
-					server.close();
-				}
-				catch(IOException e)
-				{
-					e.printStackTrace();
-				}
+//				try
+//				{
+//					server.close();
+//				}
+//				catch(IOException e)
+//				{
+//					e.printStackTrace();
+//				}
 			}
 		}
 	}
