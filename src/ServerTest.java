@@ -19,7 +19,7 @@ public class ServerTest
 
 			try
 			{
-				dataEvent.sender.send(new StringData("SHUDDA FUCK UP"));
+				dataEvent.sender.send(new StringData("received"));
 			}
 			catch(IOException e)
 			{
