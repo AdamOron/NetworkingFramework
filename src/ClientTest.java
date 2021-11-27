@@ -1,10 +1,6 @@
 import networking.client.Client;
-import networking.connection.Connection;
-import networking.data.Data;
 import networking.data.StringData;
-
 import java.io.IOException;
-import java.net.Socket;
 import java.util.HashSet;
 
 public class ClientTest

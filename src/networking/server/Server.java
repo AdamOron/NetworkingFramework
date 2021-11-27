@@ -11,6 +11,12 @@ import java.net.ServerSocket;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * @author AdamOron
+ *
+ * Class representing a Server that's hosted locally.
+ * Each Server allows multiple Clients to connect to it, and it hanldes them all simultaneously.
+ */
 public class Server implements Closeable
 {
 	/**
@@ -207,6 +213,10 @@ public class Server implements Closeable
 		}
 	}
 
+	/**
+	 * @throws IOException if failed to close Server.
+	 * Close this Server & all connections to it.
+	 */
 	@Override
 	public void close() throws IOException
 	{
@@ -229,49 +239,93 @@ public class Server implements Closeable
 		return isClosed;
 	}
 
+	/**
+	 * @return HashSet with the ID of every connection to this Server.
+	 */
 	public Set<Integer> getConnectionSet()
 	{
 		return connectionCache.getConnectionSet();
 	}
 
+	/**
+	 * @return amount of clients connected to this Server.
+	 */
 	public int getConnectionAmount()
 	{
 		return connectionCache.size();
 	}
 
+	/**
+	 * @param handler to be registered.
+	 *
+	 * Register given handler to all DataReceivalEvents. This is what allows us to actually handle data receival.
+	 */
 	public void registerDataReceiveHandler(EventHandler<DataReceiveEvent> handler)
 	{
 		this.eventDispatcher.register(DataReceiveEvent.class, handler);
 	}
 
+	/**
+	 * @param handler to be registered.
+	 *
+	 * Register given handler to all ConnectionEvent.Accepts. This event is fired whenever a Client is accepted into the server.
+	 */
 	public void registerConnectionAcceptedHandler(EventHandler<ConnectionEvent.Accepted> handler)
 	{
 		this.eventDispatcher.register(ConnectionEvent.Accepted.class, handler);
 	}
 
+	/**
+	 * @param handler to be registered.
+	 *
+	 * Register given handler to all ConnectionEvent.Ends. This event is fired whenever a Client leaves the Server.
+	 */
 	public void registerConnectionEndedHandler(EventHandler<ConnectionEvent.Ended> handler)
 	{
 		this.eventDispatcher.register(ConnectionEvent.Ended.class, handler);
 	}
 
+	/**
+	 * @param conn the connection to be added. Already filtered & approved.
+	 *
+	 * Adds given connection to the Server.
+	 *
+	 */
 	private void add(Connection conn)
 	{
+		/* Add given connection to cache & save its new ID */
 		int key = connectionCache.cache(conn);
 
 		System.out.println("Server: Accepting <" + key + ">");
 
+		/* Dispatch ConnectionEvent for the new accepted connection */
 		eventDispatcher.dispatch(new ConnectionEvent.Accepted(conn, key));
 
+		/* Start new ThreadedConnection instance for handling the given connection simultaneously */
 		new ThreadedConnection(conn, key).start();
 	}
 
+	/**
+	 * @param connKey the key of the connection we want to close.
+	 * @throws IOException if failed to close connection with given key.
+	 */
 	private void close(int connKey) throws IOException
 	{
 		System.out.println("Server: Terminating <" + connKey + ">");
 
+		/* Get matching connection with connection key */
 		Connection conn = connectionCache.get(connKey);
+
+		/* If there is no cached connection that matches given key, throw exception */
+		if(conn == null)
+		{
+			throw new NullPointerException("Given Connection ID does not exist in Server's ConnectionCache.");
+		}
+
+		/* Close matching connection */
 		conn.close();
 
+		/* Dispatch ConnectionEvent notifying that the connection was ended */
 		eventDispatcher.dispatch(new ConnectionEvent.Ended(conn, connKey));
 	}
 
